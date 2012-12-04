@@ -1,0 +1,3 @@
+rm main.o
+mpicc -o main.o main.c
+mpirun -np 4 main.o
