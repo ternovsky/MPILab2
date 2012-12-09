@@ -8,35 +8,17 @@ void print_matrix(int **matrix, int row_count, int column_count) {
 		for (j = 0; j < column_count; j++) {
 			printf("%d  ", matrix[i][j]);	
 		}
-	    printf("\n");
+    	printf("\n");
 	}	
 }
 
-void test() {
-
-}
-
-void measure_time() {
-
-}
-
-int** build_matrix() {
-
-}
-
-int main(int argc, char **argv) {
-
-    int rank, size, row_count, modulo, i, j, value, count;
-    int k = 0, sum = 0, n = 5;
-    int **matrix;
+void transpose(int n, int rank, int size, int loggable_rank) {
+	int row_count, modulo, i, j, value, count;
+    int k = 0, sum = 0;
     int *rbuf, *displs, *sbuf, *rcounts;
+    int **matrix;
     
-    MPI_Status status;
-    MPI_Init( &argc, &argv );
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);	
-	
-	row_count = n / size;
+    row_count = n / size;
 	modulo = n % size;
 	if (modulo > 0) {
 		if (rank <= modulo - 1) {
@@ -58,7 +40,7 @@ int main(int argc, char **argv) {
 		value++;
 	}
 	
-	if (rank == 0) {
+	if (rank == loggable_rank) {
 		printf("\n\nInitial matrix:\n");
 		print_matrix(matrix, row_count, n);
 	}
@@ -98,10 +80,39 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	if (rank == 0) {
+	if (rank == loggable_rank) {
 		printf("\n\nResult matrix:\n");
 		print_matrix(matrix, n, n);
 	}
+}
+
+int main(int argc, char **argv) {
+
+	int rank, size, n, log_rank = -1;
+	double t1, t2;
+    
+    MPI_Init( &argc, &argv );
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    
+    if (log_rank > 0 && log_rank < size) {
+    	transpose(8, rank, size, log_rank);
+    } else {
+    	for (n = 100; n <= 1000; n += 100) {
+    		MPI_Barrier(MPI_COMM_WORLD);
+    		if (rank == 0) {
+    			t1 = MPI_Wtime();
+    		}
+    	
+    		transpose(n, rank, size, log_rank);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+    		if (rank == 0) {
+    			t2 = MPI_Wtime();
+    			printf("%d x %d -> time = %f seconds\n", n, n, t2 - t1);
+    		}
+    	} 
+    }
 	
 	MPI_Finalize();
     return 0;
