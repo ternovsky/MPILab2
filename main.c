@@ -24,8 +24,8 @@ void transpose(int n, int rank, int size, int loggable_rank) {
 		if (rank <= modulo - 1) {
 			row_count++;
 			value = rank*row_count;
-		} else if (rank == modulo) {
-			value = rank*(row_count + 1);
+		} else {
+			value = modulo*(row_count + 1) + (rank - modulo)*row_count;
 		}
 	} else {
 		value = rank*row_count;
